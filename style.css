@@ -39,3 +39,55 @@ button:hover:not(:disabled) { background: #43a047; }
 button:active:not(:disabled) { transform: scale(.97); }
 button:disabled { background: #3a3a40; color: #777; cursor: not-allowed; }
 #result { margin-top: 16px; font-size: 1.1rem; min-height: 1.4em; color: #ffd54f; }
+
+/* --- Оверлей выпадения --- */
+#mob-reveal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+#mob-reveal.hidden { display: none; }
+#mob-reveal.show { opacity: 1; }
+
+#reveal-emoji {
+  font-size: 140px;
+  line-height: 1;
+  filter: drop-shadow(0 0 20px #4caf50) drop-shadow(0 0 40px #81c784);
+  animation: popIn .5s cubic-bezier(.2,.9,.3,1.3) forwards,
+             glowPulse 1.5s ease-in-out infinite alternate;
+  transform: scale(0);
+  opacity: 0;
+}
+
+#reveal-name {
+  margin-top: 10px;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 10px #4caf50, 0 0 25px #4caf50, 0 4px 8px rgba(0,0,0,.8);
+  opacity: 0;
+  animation: fadeUp .5s ease-out .3s forwards;
+}
+
+@keyframes popIn {
+  0%   { transform: scale(0) rotate(-180deg); opacity: 0; }
+  60%  { transform: scale(1.15) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes glowPulse {
+  0%   { filter: drop-shadow(0 0 15px #4caf50) drop-shadow(0 0 30px #81c784); }
+  100% { filter: drop-shadow(0 0 35px #66bb6a) drop-shadow(0 0 70px #a5d6a7); }
+}
+
+@keyframes fadeUp {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+  }
