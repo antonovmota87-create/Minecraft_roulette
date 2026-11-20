@@ -80,6 +80,11 @@ function spin() {
   spinBtn.disabled = true;
   resultEl.textContent = "…";
 
+  // Скрываем оверлей с прошлого раза, если он еще висит
+  const reveal = document.getElementById("mob-reveal");
+  reveal.classList.add("hidden");
+  reveal.classList.remove("show");
+
   const extraTurns = 6 + Math.random() * 4;
   const target = angle + extraTurns * Math.PI * 2 + Math.random() * Math.PI * 2;
   const start = angle;
@@ -111,6 +116,34 @@ function showResult() {
   const index = Math.floor(norm / SEG) % N;
   const mob = MOBS[index];
   resultEl.textContent = `Выпал: ${mob.emoji} ${mob.name}`;
+
+  // Показ оверлея с анимацией
+  const reveal = document.getElementById("mob-reveal");
+  const emojiEl = document.getElementById("reveal-emoji");
+  const nameEl = document.getElementById("reveal-name");
+
+  emojiEl.textContent = mob.emoji;
+  nameEl.textContent = mob.name;
+
+  // Перезапуск анимации (сброс классов и перезапись)
+  reveal.classList.remove("hidden", "show");
+  emojiEl.style.animation = "none";
+  nameEl.style.animation = "none";
+
+  // Принудительный reflow для перезапуска анимации
+  void emojiEl.offsetWidth;
+  void nameEl.offsetWidth;
+
+  emojiEl.style.animation = "";
+  nameEl.style.animation = "";
+
+  reveal.classList.add("show");
+
+  // Скрыть через 3 секунды
+  setTimeout(() => {
+    reveal.classList.remove("show");
+    setTimeout(() => reveal.classList.add("hidden"), 300);
+  }, 3000);
 }
 
 spinBtn.addEventListener("click", spin);
