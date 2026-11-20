@@ -24,6 +24,8 @@ const COLORS = [
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
+const fxCanvas = document.getElementById("fx");
+const fx = fxCanvas.getContext("2d");
 const spinBtn = document.getElementById("spin");
 const resultEl = document.getElementById("result");
 
@@ -34,6 +36,9 @@ const CX = R, CY = R;
 
 let angle = 0;
 let spinning = false;
+let fxActive = false;
+let fxStart = 0;
+let hitColor = "#fff";
 
 function drawWheel() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -74,15 +79,86 @@ function drawWheel() {
   ctx.stroke();
 }
 
+function startFx(color) {
+  hitColor = color;
+  fxActive = true;
+  fxStart = performance.now();
+  requestAnimationFrame(animateFx);
+}
+
+function animateFx(now) {
+  if (!fxActive) return;
+  const t = (now - fxStart) / 1400; // 1.4 сек
+
+  if (t >= 1) {
+    fxActive = false;
+    fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+    return;
+  }
+
+  fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+  const easeOut = 1 - Math.pow(1 - t, 2);
+  const alpha = 1 - t;
+
+  // 1. Расходящиеся лучи
+  const rayCount = 24;
+  const maxLen = R * 0.9;
+  fx.save();
+  fx.translate(CX, CY);
+  fx.strokeStyle = hitColor;
+  fx.lineWidth = 4;
+  fx.globalAlpha = alpha;
+  for (let i = 0; i < rayCount; i++) {
+    const a = (Math.PI * 2 / rayCount) * i;
+    const len = maxLen * easeOut * (0.5 + Math.random() * 0.5);
+    fx.beginPath();
+    fx.moveTo(Math.cos(a) * 40, Math.sin(a) * 40);
+    fx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+    fx.stroke();
+  }
+  fx.restore();
+
+  // 2. Пульсирующие окружности
+  const rings = 3;
+  for (let i = 0; i < rings; i++) {
+    const ringProgress = Math.max(0, t - i * 0.15);
+    if (ringProgress <= 0) continue;
+    const ringR = 40 + (R * 0.85) * (1 - Math.pow(1 - ringProgress, 2));
+    fx.beginPath();
+    fx.arc(CX, CY, ringR, 0, Math.PI * 2);
+    fx.strokeStyle = hitColor;
+    fx.lineWidth = 6 - i * 2;
+    fx.globalAlpha = (1 - ringProgress) * 0.8;
+    fx.stroke();
+  }
+
+  // 3. Вспышка в центре
+  if (t < 0.3) {
+    const flashT = t / 0.3;
+    const gradient = fx.createRadialGradient(CX, CY, 0, CX, CY, R * 0.6);
+    gradient.addColorStop(0, `rgba(255,255,255,${0.9 * (1 - flashT)})`);
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    fx.fillStyle = gradient;
+    fx.globalAlpha = 1;
+    fx.beginPath();
+    fx.arc(CX, CY, R, 0, Math.PI * 2);
+    fx.fill();
+  }
+
+  fx.globalAlpha = 1;
+  requestAnimationFrame(animateFx);
+}
+
 function spin() {
   if (spinning) return;
   spinning = true;
   spinBtn.disabled = true;
   resultEl.textContent = "…";
 
-  const reveal = document.getElementById("mob-reveal");
-  reveal.classList.add("hidden");
-  reveal.classList.remove("show");
+  // Сброс старого эффекта
+  fxActive = false;
+  fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
 
   const extraTurns = 6 + Math.random() * 4;
   const target = angle + extraTurns * Math.PI * 2 + Math.random() * Math.PI * 2;
@@ -116,27 +192,8 @@ function showResult() {
   const mob = MOBS[index];
   resultEl.textContent = `Выпал: ${mob.emoji} ${mob.name}`;
 
-  const reveal = document.getElementById("mob-reveal");
-  const emojiEl = document.getElementById("reveal-emoji");
-  const nameEl = document.getElementById("reveal-name");
-
-  emojiEl.textContent = mob.emoji;
-  nameEl.textContent = mob.name;
-
-  reveal.classList.remove("hidden", "show");
-  emojiEl.style.animation = "none";
-  nameEl.style.animation = "none";
-  void emojiEl.offsetWidth;
-  void nameEl.offsetWidth;
-  emojiEl.style.animation = "";
-  nameEl.style.animation = "";
-
-  reveal.classList.add("show");
-
-  setTimeout(() => {
-    reveal.classList.remove("show");
-    setTimeout(() => reveal.classList.add("hidden"), 300);
-  }, 3000);
+  const color = COLORS[index % COLORS.length];
+  startFx(color);
 }
 
 spinBtn.addEventListener("click", spin);
