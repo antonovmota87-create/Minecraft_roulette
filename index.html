@@ -1,22 +1,38 @@
+<!-- file: index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Minecraft Mob Roulette</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main>
-    <h1>Minecraft Mob Roulette</h1>
+  <main class="stage">
+    <h1 class="title">Mob Roulette</h1>
+
     <div class="wheel-wrap">
-      <canvas id="wheel" width="520" height="520"></canvas>
-      <canvas id="fx" width="520" height="520" class="fx-canvas"></canvas>
-      <div class="pointer"></div>
+      <div class="arrow" aria-hidden="true"></div>
+      <canvas id="wheel" width="720" height="720" aria-label="Колесо рулетки"></canvas>
+      <button id="spin" class="spin-btn" type="button">Крутить</button>
     </div>
-    <button id="spin">Крутить</button>
-    <p id="result">Нажми «Крутить»</p>
+
+    <p class="hint">Крути и смотри, кто выпадет</p>
   </main>
+
+  <!-- оверлей результата -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="result">
+      <img id="result-img" class="result-img" alt="" />
+      <h2 id="result-name" class="result-name"></h2>
+      <button id="close" class="close-btn" type="button">Ещё раз</button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
