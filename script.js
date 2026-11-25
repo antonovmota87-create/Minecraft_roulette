@@ -1,218 +1,179 @@
+// file: script.js
+// Пиксельные спрайты мобов через Minecraft Wiki CDN (можно заменить на локальные /assets)
 const MOBS = [
-  { name: "Зомби",      emoji: "🧟" },
-  { name: "Скелет",     emoji: "💀" },
-  { name: "Крипер",     emoji: "💥" },
-  { name: "Паук",       emoji: "🕷️" },
-  { name: "Эндермен",   emoji: "🖤" },
-  { name: "Слизень",    emoji: "🟢" },
-  { name: "Гаст",       emoji: "👻" },
-  { name: "Пиглин",     emoji: "🐷" },
-  { name: "Хоглин",     emoji: "🐗" },
-  { name: "Витер",      emoji: "☠️" },
-  { name: "Дракон Края", emoji: "🐉" },
-  { name: "Железный голем", emoji: "🤖" },
-  { name: "Деревенский житель", emoji: "🧑‍🌾" },
-  { name: "Корова",     emoji: "🐄" },
-  { name: "Свинья",     emoji: "🐖" },
-  { name: "Курица",     emoji: "🐔" },
+  { name: "Зомби",        img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5c/Zombie_JE5_BE2.png/revision/latest?cb=20210609080910", weight: 20 },
+  { name: "Скелет",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9e/Skeleton_JE2_BE1.png/revision/latest?cb=20210609073725", weight: 18 },
+  { name: "Паук",         img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/6e/Spider_JE4_BE3.png/revision/latest?cb=20210609075631", weight: 16 },
+  { name: "Крипер",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5d/Creeper_JE2_BE1.png/revision/latest?cb=20210609074059", weight: 14 },
+  { name: "Ведьма",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/4/4d/Witch_JE2_BE1.png/revision/latest?cb=20210609081210", weight: 10 },
+  { name: "Эндермен",     img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8e/Enderman_JE2_BE1.png/revision/latest?cb=20210609074656", weight: 8 },
+  { name: "Ифрит",        img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/7/7a/Blaze_JE2_BE1.png/revision/latest?cb=20210609075339", weight: 6 },
+  { name: "Свинозомби",   img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/6d/Zombified_Piglin_JE5_BE3.png/revision/latest?cb=20210609080542", weight: 5 },
+  { name: "Гаст",         img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9b/Ghast_JE2_BE1.png/revision/latest?cb=20210609074307", weight: 3 },
+  { name: "Иссушитель",   img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3a/Wither_JE1_BE1.png/revision/latest?cb=20210609081626", weight: 1 },
 ];
 
-// Пиксельная палитра
-const COLORS = [
-  "#aa0000", "#800080", "#0000aa", "#000080",
-  "#008080", "#00aa00", "#ff5555", "#5c3a21"
-];
+const COLORS = ["#2fe06a", "#1f8f4a", "#3ac77a", "#176b39", "#4be08f", "#239c55", "#2bb86a", "#1a7a42", "#57e89a", "#14532d"];
+const SEG = MOBS.length;
+const TAU = Math.PI * 2;
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
-const fxCanvas = document.getElementById("fx");
-const fx = fxCanvas.getContext("2d");
 const spinBtn = document.getElementById("spin");
-const resultEl = document.getElementById("result");
+const overlay = document.getElementById("overlay");
+const resultImg = document.getElementById("result-img");
+const resultName = document.getElementById("result-name");
+const closeBtn = document.getElementById("close");
 
-const N = MOBS.length;
-const SEG = (Math.PI * 2) / N;
-const R = canvas.width / 2;
-const CX = R, CY = R;
-
-let angle = 0;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+let rotation = -Math.PI / 2; // верх колеса
 let spinning = false;
-let fxActive = false;
-let fxStart = 0;
-let hitColor = "#fff";
 
-// Отключаем сглаживание на канвасах для четких пикселей
-ctx.imageSmoothingEnabled = false;
-fx.imageSmoothingEnabled = false;
+// Загрузка картинок заранее
+const images = {};
+MOBS.forEach((m, i) => {
+  const im = new Image();
+  im.crossOrigin = "anonymous";
+  im.src = m.img;
+  images[i] = im;
+});
+
+function setupCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * DPR;
+  canvas.height = rect.height * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  drawWheel();
+}
 
 function drawWheel() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  const cx = w / 2, cy = h / 2;
+  const r = Math.min(w, h) / 2 - 4;
+  const segAngle = TAU / SEG;
+  ctx.clearRect(0, 0, w, h);
 
-  for (let i = 0; i < N; i++) {
-    const start = i * SEG + angle;
-    const end = start + SEG;
-
+  // Внешнее кольцо
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rotation);
+  for (let i = 0; i < SEG; i++) {
+    const a0 = i * segAngle;
+    const a1 = a0 + segAngle;
     ctx.beginPath();
-    ctx.moveTo(CX, CY);
-    ctx.arc(CX, CY, R - 8, start, end);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, r, a0, a1);
     ctx.closePath();
     ctx.fillStyle = COLORS[i % COLORS.length];
     ctx.fill();
-    
-    // Жирная черная обводка секторов
-    ctx.strokeStyle = "#1b1b1f";
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = "rgba(0,0,0,.35)";
+    ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Текст с обводкой
+    // Спрайт моба
+    const mid = a0 + segAngle / 2;
+    const imgR = r * 0.72;
+    const ix = Math.cos(mid) * imgR;
+    const iy = Math.sin(mid) * imgR;
+    const size = Math.min(w, h) * 0.11;
+    const im = images[i];
     ctx.save();
-    ctx.translate(CX, CY);
-    ctx.rotate(start + SEG / 2);
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    
-    // Название моба (пиксельный шрифт)
-    ctx.font = "16px 'Minecraft', monospace";
-    
-    // Черная тень
-    ctx.fillStyle = "#1b1b1f";
-    ctx.fillText(MOBS[i].name, R - 14, 2);
-    ctx.fillText(MOBS[i].name, R - 16, 2);
-    
-    // Белый текст
-    ctx.fillStyle = "#fff";
-    ctx.fillText(MOBS[i].name, R - 15, 0);
-    
-    // Эмодзи
-    ctx.font = "20px sans-serif"; // Эмодзи оставляем обычным
-    ctx.fillText(MOBS[i].emoji, R - 150, 0);
+    ctx.translate(ix, iy);
+    ctx.rotate(mid + Math.PI / 2);
+    if (im && im.complete && im.naturalWidth) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(im, -size / 2, -size / 2, size, size);
+    }
     ctx.restore();
   }
+  ctx.restore();
 
-  // Центральный круг с жесткой пиксельной обводкой
+  // Обод
   ctx.beginPath();
-  ctx.arc(CX, CY, 34, 0, Math.PI * 2);
-  ctx.fillStyle = "#1b1b1f";
-  ctx.fill();
-  ctx.strokeStyle = "#aaaaaa";
-  ctx.lineWidth = 6;
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = "#0b0f14";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r - 5, 0, TAU);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = "rgba(91,255,138,.5)";
   ctx.stroke();
 }
 
-function startFx(color) {
-  hitColor = color;
-  fxActive = true;
-  fxStart = performance.now();
-  requestAnimationFrame(animateFx);
-}
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
-function animateFx(now) {
-  if (!fxActive) return;
-  const t = (now - fxStart) / 1400; // 1.4 сек
-
-  if (t >= 1) {
-    fxActive = false;
-    fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-    return;
+function weightedPick() {
+  const total = MOBS.reduce((s, m) => s + m.weight, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < MOBS.length; i++) {
+    r -= MOBS[i].weight;
+    if (r <= 0) return i;
   }
-
-  fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-
-  const easeOut = 1 - Math.pow(1 - t, 2);
-  const alpha = 1 - t;
-
-  // 1. Пиксельные квадратные лучи вместо линий
-  const rayCount = 24;
-  const maxLen = R * 0.9;
-  fx.save();
-  fx.translate(CX, CY);
-  fx.fillStyle = hitColor;
-  fx.globalAlpha = alpha;
-  
-  for (let i = 0; i < rayCount; i++) {
-    const a = (Math.PI * 2 / rayCount) * i;
-    const len = maxLen * easeOut * (0.5 + Math.random() * 0.5);
-    const x = Math.cos(a) * len;
-    const y = Math.sin(a) * len;
-    
-    // Рисуем квадраты (пиксели)
-    fx.fillRect(x - 4, y - 4, 8, 8);
-    fx.fillRect(Math.cos(a) * (len * 0.5) - 2, Math.sin(a) * (len * 0.5) - 2, 4, 4);
-  }
-  fx.restore();
-
-  // 2. Кольца (рисуем пунктиром для пиксельности)
-  const rings = 3;
-  for (let i = 0; i < rings; i++) {
-    const ringProgress = Math.max(0, t - i * 0.15);
-    if (ringProgress <= 0) continue;
-    const ringR = 40 + (R * 0.85) * (1 - Math.pow(1 - ringProgress, 2));
-    fx.beginPath();
-    fx.arc(CX, CY, ringR, 0, Math.PI * 2);
-    fx.strokeStyle = hitColor;
-    fx.lineWidth = 8;
-    fx.setLineDash([10, 10]); // Квадратный пунктир
-    fx.globalAlpha = (1 - ringProgress) * 0.8;
-    fx.stroke();
-  }
-  fx.setLineDash([]);
-
-  // 3. Вспышка в центре
-  if (t < 0.3) {
-    const flashT = t / 0.3;
-    fx.fillStyle = `rgba(255,255,255,${0.9 * (1 - flashT)})`;
-    fx.globalAlpha = 1;
-    fx.fillRect(0, 0, fxCanvas.width, fxCanvas.height);
-  }
-
-  fx.globalAlpha = 1;
-  requestAnimationFrame(animateFx);
+  return MOBS.length - 1;
 }
 
 function spin() {
   if (spinning) return;
   spinning = true;
   spinBtn.disabled = true;
-  resultEl.textContent = "…";
 
-  fxActive = false;
-  fx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+  const idx = weightedPick();
+  const segAngle = TAU / SEG;
+  // центр сегмента должен оказаться под стрелкой (верх, -PI/2)
+  const targetCenter = idx * segAngle + segAngle / 2;
+  const extra = TAU * (6 + Math.floor(Math.random() * 4));
+  const finalRotation = -Math.PI / 2 - targetCenter + extra;
 
-  const extraTurns = 6 + Math.random() * 4;
-  const target = angle + extraTurns * Math.PI * 2 + Math.random() * Math.PI * 2;
-  const start = angle;
-  const duration = 4200;
+  const startRot = rotation;
+  const delta = ((finalRotation - startRot) % TAU + TAU) % TAU + TAU * 7;
+  const duration = 4200 + Math.random() * 900;
   const t0 = performance.now();
-
-  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 
   function frame(now) {
     const t = Math.min((now - t0) / duration, 1);
-    angle = start + (target - start) * easeOutCubic(t);
+    rotation = startRot + delta * easeOutCubic(t);
     drawWheel();
-
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      angle = target % (Math.PI * 2);
-      spinning = false;
-      spinBtn.disabled = false;
-      showResult();
+      // нормализуем
+      rotation = ((rotation % TAU) + TAU) % TAU;
+      showResult(idx);
     }
   }
   requestAnimationFrame(frame);
 }
 
-function showResult() {
-  const pointer = (-Math.PI / 2 - angle) % (Math.PI * 2);
-  const norm = (pointer + Math.PI * 2) % (Math.PI * 2);
-  const index = Math.floor(norm / SEG) % N;
-  const mob = MOBS[index];
-  resultEl.textContent = `Выпал: ${mob.emoji} ${mob.name}`;
+function showResult(idx) {
+  const mob = MOBS[idx];
+  resultImg.src = mob.img;
+  resultImg.alt = mob.name;
+  resultName.textContent = mob.name;
+  overlay.classList.add("show");
+  overlay.setAttribute("aria-hidden", "false");
+  spinning = false;
+  spinBtn.disabled = false;
+}
 
-  const color = COLORS[index % COLORS.length];
-  startFx(color);
+function hideResult() {
+  overlay.classList.remove("show");
+  overlay.setAttribute("aria-hidden", "true");
 }
 
 spinBtn.addEventListener("click", spin);
-drawWheel();
+closeBtn.addEventListener("click", hideResult);
+overlay.addEventListener("click", (e) => { if (e.target === overlay) hideResult(); });
+window.addEventListener("resize", setupCanvas);
+
+// перерисовка по мере загрузки картинок
+let loaded = 0;
+MOBS.forEach((m, i) => {
+  const im = images[i];
+  im.onload = () => { loaded++; drawWheel(); };
+  im.onerror = () => { drawWheel(); };
+});
+
+window.addEventListener("load", setupCanvas);
+setupCanvas();
