@@ -1,18 +1,151 @@
 // file: script.js
-// Пиксельные спрайты мобов через Minecraft Wiki CDN (можно заменить на локальные /assets)
-const MOBS = [
-  { name: "Зомби",        img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5c/Zombie_JE5_BE2.png/revision/latest?cb=20210609080910", weight: 20 },
-  { name: "Скелет",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9e/Skeleton_JE2_BE1.png/revision/latest?cb=20210609073725", weight: 18 },
-  { name: "Паук",         img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/6e/Spider_JE4_BE3.png/revision/latest?cb=20210609075631", weight: 16 },
-  { name: "Крипер",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/5/5d/Creeper_JE2_BE1.png/revision/latest?cb=20210609074059", weight: 14 },
-  { name: "Ведьма",       img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/4/4d/Witch_JE2_BE1.png/revision/latest?cb=20210609081210", weight: 10 },
-  { name: "Эндермен",     img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/8/8e/Enderman_JE2_BE1.png/revision/latest?cb=20210609074656", weight: 8 },
-  { name: "Ифрит",        img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/7/7a/Blaze_JE2_BE1.png/revision/latest?cb=20210609075339", weight: 6 },
-  { name: "Свинозомби",   img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/6/6d/Zombified_Piglin_JE5_BE3.png/revision/latest?cb=20210609080542", weight: 5 },
-  { name: "Гаст",         img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/9/9b/Ghast_JE2_BE1.png/revision/latest?cb=20210609074307", weight: 3 },
-  { name: "Иссушитель",   img: "https://static.wikia.nocookie.net/minecraft_gamepedia/images/3/3a/Wither_JE1_BE1.png/revision/latest?cb=20210609081626", weight: 1 },
-];
+// Спрайты мобов вшиты как пиксельные карты: 8x8 на моба, палитра символами.
+// Никаких внешних запросов — работает офлайн и на GitHub Pages.
 
+const SPRITES = {
+  "Зомби": {
+    weight: 20,
+    palette: { g: "#3fa34d", d: "#2b6f35", k: "#1b1b1b", s: "#6b4f2a", w: "#e8f0e8" },
+    map: [
+      "gggggggg",
+      "gwwggwwg",
+      "gkggggkg",
+      "ggkkkkgg",
+      "gddggddg",
+      "gsdggdsg",
+      "gggggggg",
+      "gddggddg",
+    ],
+  },
+  "Скелет": {
+    weight: 18,
+    palette: { w: "#e8e8e0", d: "#b8b8b0", k: "#1b1b1b" },
+    map: [
+      "wwwwwwww",
+      "wkwwwwkw",
+      "wwwwwwww",
+      "wwwkkwww",
+      "wwdwwdww",
+      "wwwwwwww",
+      "wdwwwwdw",
+      "wwwwwwww",
+    ],
+  },
+  "Паук": {
+    weight: 16,
+    palette: { k: "#2a2a2a", d: "#141414", r: "#c03030" },
+    map: [
+      "kddkkddk",
+      "dkdkkdkd",
+      "kkrk krkk".replace(" ", "k"),
+      "dkrkkrkd",
+      "kkkkkkkk",
+      "dkdkkdkd",
+      "kdkddkdk",
+      "dkkddkkd",
+    ],
+  },
+  "Крипер": {
+    weight: 14,
+    palette: { g: "#4fbf5f", d: "#2f8f3f", k: "#0f2f17" },
+    map: [
+      "gggggggg",
+      "gkkggkkg",
+      "gkkggkkg",
+      "gggkkggg",
+      "ggkkkkgg",
+      "ggkggkgg",
+      "gggggggg",
+      "gdgggdgg",
+    ],
+  },
+  "Ведьма": {
+    weight: 10,
+    palette: { p: "#6b4f8a", d: "#3d2b52", s: "#c9a06b", k: "#1b1b1b" },
+    map: [
+      "pppppppp",
+      "pdpddpdp",
+      "dppppppd",
+      "dksssskd",
+      "dssssssd",
+      "dpsssspd",
+      "dppppppd",
+      "dppddppd",
+    ],
+  },
+  "Эндермен": {
+    weight: 8,
+    palette: { k: "#141418", p: "#7a4fbf", m: "#c98aff" },
+    map: [
+      "kkkkkkkk",
+      "kmkkkkmk",
+      "kkkkkkkk",
+      "kkmmmmkk",
+      "kkkkkkkk",
+      "kppkkppk",
+      "kkkkkkkk",
+      "kpkkkkpk",
+    ],
+  },
+  "Ифрит": {
+    weight: 6,
+    palette: { y: "#ffcc33", o: "#e07a1f", k: "#3a1f0a" },
+    map: [
+      "yyyyyyyy",
+      "ykkyykky",
+      "yyyyyyyy",
+      "yykkkkyy",
+      "yyyyyyyy",
+      "yoyyyyoy",
+      "yyoyyoyy",
+      "yyyyyyyy",
+    ],
+  },
+  "Свинозомби": {
+    weight: 5,
+    palette: { g: "#3fa34d", p: "#e08aa8", d: "#2b6f35", k: "#1b1b1b" },
+    map: [
+      "gggggggg",
+      "gkggggkg",
+      "ggppppgg",
+      "ggpkkpgg",
+      "gddggddg",
+      "gggggggg",
+      "gddggddg",
+      "gggggggg",
+    ],
+  },
+  "Гаст": {
+    weight: 3,
+    palette: { w: "#e8e8e8", d: "#b8b8b8", k: "#1b1b1b", t: "#9aa0a6" },
+    map: [
+      "wwwwwwww",
+      "wkwwwwkw",
+      "wwwwwwww",
+      "wwkkkkww",
+      "wwwwwwww",
+      "wdwwwwdw",
+      "wwddddww",
+      "twwwwwwt",
+    ],
+  },
+  "Иссушитель": {
+    weight: 1,
+    palette: { k: "#1a1a1a", d: "#0a0a0a", b: "#3a5a8a" },
+    map: [
+      "kkkkkkkk",
+      "kbkkkkbk",
+      "kkkkkkkk",
+      "kkbkkbkk",
+      "kkkkkkkk",
+      "kdkddkdk",
+      "kkkkkkkk",
+      "kdkkkkdk",
+    ],
+  },
+};
+
+const MOBS = Object.entries(SPRITES).map(([name, data], i) => ({ name, ...data, index: i }));
 const COLORS = ["#2fe06a", "#1f8f4a", "#3ac77a", "#176b39", "#4be08f", "#239c55", "#2bb86a", "#1a7a42", "#57e89a", "#14532d"];
 const SEG = MOBS.length;
 const TAU = Math.PI * 2;
@@ -26,17 +159,28 @@ const resultName = document.getElementById("result-name");
 const closeBtn = document.getElementById("close");
 
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
-let rotation = -Math.PI / 2; // верх колеса
+let rotation = -Math.PI / 2;
 let spinning = false;
 
-// Загрузка картинок заранее
-const images = {};
-MOBS.forEach((m, i) => {
-  const im = new Image();
-  im.crossOrigin = "anonymous";
-  im.src = m.img;
-  images[i] = im;
-});
+// Генерация спрайта моба в offscreen canvas
+function renderSprite(mob, size = 64) {
+  const c = document.createElement("canvas");
+  c.width = size; c.height = size;
+  const g = c.getContext("2d");
+  const px = size / 8;
+  g.imageSmoothingEnabled = false;
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const ch = mob.map[y][x];
+      const color = mob.palette[ch];
+      if (color) { g.fillStyle = color; g.fillRect(x * px, y * px, px, px); }
+    }
+  }
+  return c;
+}
+
+const SPRITE_CACHE = MOBS.map((m) => renderSprite(m, 128));
+const SPRITE_SMALL = MOBS.map((m) => renderSprite(m, 64));
 
 function setupCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -54,7 +198,6 @@ function drawWheel() {
   const segAngle = TAU / SEG;
   ctx.clearRect(0, 0, w, h);
 
-  // Внешнее кольцо
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rotation);
@@ -71,25 +214,20 @@ function drawWheel() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Спрайт моба
     const mid = a0 + segAngle / 2;
-    const imgR = r * 0.72;
+    const imgR = r * 0.68;
     const ix = Math.cos(mid) * imgR;
     const iy = Math.sin(mid) * imgR;
-    const size = Math.min(w, h) * 0.11;
-    const im = images[i];
+    const size = Math.min(w, h) * 0.13;
     ctx.save();
     ctx.translate(ix, iy);
     ctx.rotate(mid + Math.PI / 2);
-    if (im && im.complete && im.naturalWidth) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(im, -size / 2, -size / 2, size, size);
-    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(SPRITE_SMALL[i], -size / 2, -size / 2, size, size);
     ctx.restore();
   }
   ctx.restore();
 
-  // Обод
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, TAU);
   ctx.lineWidth = 10;
@@ -121,7 +259,6 @@ function spin() {
 
   const idx = weightedPick();
   const segAngle = TAU / SEG;
-  // центр сегмента должен оказаться под стрелкой (верх, -PI/2)
   const targetCenter = idx * segAngle + segAngle / 2;
   const extra = TAU * (6 + Math.floor(Math.random() * 4));
   const finalRotation = -Math.PI / 2 - targetCenter + extra;
@@ -138,7 +275,6 @@ function spin() {
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      // нормализуем
       rotation = ((rotation % TAU) + TAU) % TAU;
       showResult(idx);
     }
@@ -148,7 +284,9 @@ function spin() {
 
 function showResult(idx) {
   const mob = MOBS[idx];
-  resultImg.src = mob.img;
+  // Результат — крупный data-URL из offscreen canvas
+  const big = renderSprite(mob, 512);
+  resultImg.src = big.toDataURL("image/png");
   resultImg.alt = mob.name;
   resultName.textContent = mob.name;
   overlay.classList.add("show");
@@ -166,14 +304,6 @@ spinBtn.addEventListener("click", spin);
 closeBtn.addEventListener("click", hideResult);
 overlay.addEventListener("click", (e) => { if (e.target === overlay) hideResult(); });
 window.addEventListener("resize", setupCanvas);
-
-// перерисовка по мере загрузки картинок
-let loaded = 0;
-MOBS.forEach((m, i) => {
-  const im = images[i];
-  im.onload = () => { loaded++; drawWheel(); };
-  im.onerror = () => { drawWheel(); };
-});
 
 window.addEventListener("load", setupCanvas);
 setupCanvas();
